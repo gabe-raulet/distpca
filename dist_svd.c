@@ -54,6 +54,12 @@ int main(int argc, char *argv[])
 
     int intparams[3];
 
+    mpi_timer_t timer;
+    double maxtime, proctime;
+
+    mpi_timer_init(&timer, MPI_COMM_WORLD);
+    mpi_timer_start(&timer);
+
     if (!myrank)
     {
         /*
@@ -108,6 +114,13 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    mpi_timer_stop(&timer);
+    mpi_timer_query(&timer, &maxtime, &proctime);
+
+    if (!myrank) fprintf(stderr, "[read_input::main::maxtime=%.5f(s)::proctime=%.5f(s)] finished\n", maxtime, proctime);
+
+    mpi_timer_start(&timer);
+
     /*
      * Distribute A to Aloc
      */
@@ -126,6 +139,13 @@ int main(int argc, char *argv[])
     Aloc = malloc(m*s*sizeof(double));
     MPI_Scatter(A, m*s, MPI_DOUBLE, Aloc, m*s, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+    mpi_timer_stop(&timer);
+    mpi_timer_query(&timer, &maxtime, &proctime);
+
+    if (!myrank) fprintf(stderr, "[distribute_Amat::main::maxtime=%.5f(s)::proctime=%.5f(s)] finished\n", maxtime, proctime);
+
+    mpi_timer_start(&timer);
+
     /*
      * Run distributed SVD
      */
@@ -135,6 +155,13 @@ int main(int argc, char *argv[])
         MPI_Finalize();
         return 1;
     }
+
+    mpi_timer_stop(&timer);
+    mpi_timer_query(&timer, &maxtime, &proctime);
+
+    if (!myrank) fprintf(stderr, "[svd_dist::main::maxtime=%.5f(s)::proctime=%.5f(s)] finished\n", maxtime, proctime);
+
+    mpi_timer_start(&timer);
 
     /*
      * Compute and report errors
@@ -150,6 +177,11 @@ int main(int argc, char *argv[])
         fprintf(stderr, "[main:compute_errors] Uerr=%.18e [normF(U[:,:p]@U[:,:p].T - Up@Up.T)]\n", errs[2]);
         fprintf(stderr, "[main:compute_errors] Verr=%.18e [normF(Vt[:p,:].T@Vt[:p,:] - Vtp.T@Vtp)]\n", errs[3]);
     }
+
+    mpi_timer_stop(&timer);
+    mpi_timer_query(&timer, &maxtime, &proctime);
+
+    if (!myrank) fprintf(stderr, "[compute_errors::main::maxtime=%.5f(s)::proctime=%.5f(s)] finished\n", maxtime, proctime);
 
     /*
      * Clean up
