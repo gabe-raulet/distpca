@@ -8,6 +8,16 @@
 #include <mpi.h>
 #include "distpca.h"
 
+int compute_errors
+(
+    const double *A,
+    const double *U, const double *Up,
+    const double *S, const double *Sp,
+    const double *Vt, const double *Vtp,
+    int m, int n, int p,
+    double errs[4]
+);
+
 int main(int argc, char *argv[])
 {
     int myrank, nprocs;
@@ -130,6 +140,17 @@ int main(int argc, char *argv[])
      * Compute and report errors
      */
 
+    if (!myrank)
+    {
+        double errs[4];
+        compute_errors(A, U, Up, S, Sp, Vt, Vtp, m, n, p, errs);
+
+        fprintf(stderr, "[main:compute_errors] Aerr=%.18e [normF(A - Up@Sp@Vtp)]\n", errs[0]);
+        fprintf(stderr, "[main:compute_errors] Serr=%.18e [normF(S[:p,:p] - Sp)]\n", errs[1]);
+        fprintf(stderr, "[main:compute_errors] Uerr=%.18e [normF(U[:,:p]@U[:,:p].T - Up@Up.T)]\n", errs[2]);
+        fprintf(stderr, "[main:compute_errors] Verr=%.18e [normF(Vt[:p,:].T@Vt[:p,:] - Vtp.T@Vtp)]\n", errs[3]);
+    }
+
     /*
      * Clean up
      */
@@ -151,3 +172,95 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+int compute_errors
+(
+    const double *A,
+    const double *U, const double *Up,
+    const double *S, const double *Sp,
+    const double *Vt, const double *Vtp,
+    int m, int n, int p,
+    double errs[4]
+)
+{
+    double Aerr, Serr, Uerr, Verr;
+    double *mem = malloc(m*m*sizeof(double));
+
+    /*
+     * Compute Aerr = normF(A - Up@Sp@Vtp).
+     */
+
+    for (int j = 0; j < n; ++j)
+        for (int i = 0; i < m; ++i)
+        {
+            double acc = 0;
+
+            for (int k = 0; k < p; ++k)
+            {
+                acc += Up[i + k*m]*Sp[k]*Vtp[k + j*p];
+            }
+
+            mem[i + j*m] = acc - A[i + j*m];
+        }
+
+    Aerr = LAPACKE_dlange(LAPACK_COL_MAJOR, 'F', m, n, mem, m);
+
+    /*
+     * Compute Serr = normF(S[:p,:p] - Sp).
+     */
+
+    Serr = 0;
+    for (int i = 0; i < p; ++i)
+    {
+        double delta = S[i] - Sp[i];
+        Serr += delta*delta;
+    }
+    Serr = sqrt(Serr);
+
+    /*
+     * Compute Uerr = normF(U[:,:p]@U[:,:p].T - Up@Up.T).
+     */
+
+    for (int j = 0; j < m; ++j)
+        for (int i = 0; i < m; ++i)
+        {
+            double acc = 0;
+
+            for (int k = 0; k < p; ++k)
+            {
+                acc += U[i + k*m]*U[j + k*m];
+                acc -= Up[i + k*m]*Up[j + k*m];
+            }
+
+            mem[i + j*m] = acc;
+        }
+
+    Uerr = LAPACKE_dlange(LAPACK_COL_MAJOR, 'F', m, m, mem, m);
+
+    /*M = Vt.T@Vt - Vtp.T@Vtp n-by-n */
+
+    /*
+     * Compute Verr = normF(Vt[:p,:].T@Vt[:p,:] - Vtp.T@Vtp).
+     */
+
+    for (int j = 0; j < n; ++j)
+        for (int i = 0; i < n; ++i)
+        {
+            double acc = 0;
+
+            for (int k = 0; k < p; ++k)
+            {
+                acc += Vt[k + i*n]*Vt[k + j*n];
+                acc -= Vtp[k + i*p]*Vtp[k + j*p];
+            }
+
+            mem[i + j*n] = acc;
+        }
+
+    Verr = LAPACKE_dlange(LAPACK_COL_MAJOR, 'F', n, n, mem, n);
+
+    errs[0] = Aerr, errs[1] = Serr, errs[2] = Uerr, errs[3] = Verr;
+
+    free(mem);
+    return 0;
+
+}
