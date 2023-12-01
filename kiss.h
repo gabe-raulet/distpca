@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
 
 /*
  * @func dev_rand - Generates a random 32-bit unsigned integer using the
