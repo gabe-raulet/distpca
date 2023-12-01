@@ -5,12 +5,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <math.h>
-#include "kiss.h"
-#include "cblas.h"
-#include "lapacke.h"
-#include "mmio_dense.h"
-#include "svd_algs.h"
-#include "utils.h"
+#include "distpca.h"
 
 typedef struct
 {
@@ -28,6 +23,9 @@ int usage(char *argv[], const params_t *ps);
 int parse_params(int argc, char *argv[], params_t *ps);
 int param_check(const params_t *ps);
 
+int gen_test_mat(double *A, double *S, int m, int n, int mode, double cond, double dmax, int iseed[4]);
+int gen_uv_mats(const double *A, double *S, double *U, double *Vt, int m, int n);
+
 int main(int argc, char *argv[])
 {
     params_t ps;
@@ -39,6 +37,92 @@ int main(int argc, char *argv[])
 
     if (param_check(&ps) != 0)
         return 1;
+
+    int iseed[4];
+    int m=ps.m, n=ps.n, mode=ps.mode;
+    double cond=ps.cond, dmax=ps.dmax;
+    char *label=ps.label;
+
+    assert(label != NULL);
+
+    double *A = malloc(m*n*sizeof(double));
+    double *S = malloc(n*sizeof(double));
+
+    iseed_get(iseed);
+    gen_test_mat(A, S, m, n, mode, cond, dmax, iseed);
+
+    double *Scheck = malloc(n*sizeof(double));
+    double *U = malloc(m*n*sizeof(double));
+    double *Vt = malloc(n*n*sizeof(double));
+
+    gen_uv_mats(A, Scheck, U, Vt, m, n);
+
+    int show = n < 5? n : 5;
+    fprintf(stderr, "[gen_svd:main] diag(S)[0..%d] = ", show-1);
+    for (int i = 0; i < show; ++i) fprintf(stderr, "%.3e,", S[i]);
+    fprintf(stderr, "%s\n", n < 5? "" : "...");
+
+    fprintf(stderr, "[gen_svd:main] err=%.18e (DLATMS-vs-DGESVD) [S :: singular values]\n", l2dist(S, Scheck, n));
+    free(Scheck);
+
+    char fname[1024];
+
+    snprintf(fname, 1024, "A_%s.mtx", label);
+    mmwrite(fname, A, m, n);
+
+    snprintf(fname, 1024, "U_%s.mtx", label);
+    mmwrite(fname, U, m, n);
+
+    snprintf(fname, 1024, "Vt_%s.mtx", label);
+    mmwrite(fname, Vt, n, n);
+
+    snprintf(fname, 1024, "S_%s.diag", label);
+
+    FILE *f = fopen(fname, "w");
+    for (int i = 0; i < n; ++i)
+        fprintf(f, "%.18e\n", S[i]);
+    fclose(f);
+
+    free(A);
+    free(S);
+    free(U);
+    free(Vt);
+
+    return 0;
+}
+
+int gen_uv_mats(const double *A, double *S, double *U, double *Vt, int m, int n)
+{
+    double *Al = malloc(m*n*sizeof(double));
+    double *work = malloc(5*n*sizeof(double));
+
+    memcpy(Al, A, m*n*sizeof(double));
+
+    LAPACKE_dgesvd(LAPACK_COL_MAJOR, 'S', 'S', m, n, Al, m, S, U, m, Vt, n, work);
+
+    free(Al);
+    free(work);
+
+    return 0;
+}
+
+int gen_test_mat(double *A, double *S, int m, int n, int mode, double cond, double dmax, int iseed[4])
+{
+    if (mode < 0)
+    {
+        S[0] = cond;
+
+        for (int i = 1; i < n; ++i)
+            S[i] = S[i-1] / dmax;
+
+        mode = 0;
+    }
+    else
+    {
+        assert(1 <= mode && mode <= 5);
+    }
+
+    LAPACKE_dlatms(LAPACK_COL_MAJOR, m, n, 'U', iseed, 'N', S, mode, cond, dmax, m, n, 'N', A, m);
 
     return 0;
 }

@@ -9,6 +9,18 @@
 #include "svd_utils.h"
 #include "mmio_dense.h"
 
+double l2dist(const double *x, const double *y, int n)
+{
+    double v = 0;
+
+    for (int i = 0; i < n; ++i)
+    {
+        v += ((x[i] - y[i]) * (x[i] - y[i]));
+    }
+
+    return sqrt(v);
+}
+
 int svds_naive(const double *A, double *Up, double *Sp, double *Vpt, int m, int n, int p)
 {
     assert(A != NULL && Up != NULL && Sp != NULL && Vpt != NULL && m >= n && n >= p && p >= 1);
