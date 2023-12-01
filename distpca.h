@@ -6,6 +6,7 @@
 #include "lapacke.h"
 #include "mmio_dense.h"
 #include "svd_utils.h"
+#include "svd_algs.h"
 #include "utils.h"
 
 #endif

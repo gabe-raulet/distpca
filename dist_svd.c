@@ -108,6 +108,10 @@ int main(int argc, char *argv[])
         Sp = malloc(p*sizeof(double));
         Vtp = malloc(p*n*sizeof(double));
     }
+    else
+    {
+        Up = Sp = Vtp = NULL;
+    }
 
     Aloc = malloc(m*s*sizeof(double));
     MPI_Scatter(A, m*s, MPI_DOUBLE, Aloc, m*s, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -115,6 +119,12 @@ int main(int argc, char *argv[])
     /*
      * Run distributed SVD
      */
+
+    if (svd_dist(Aloc, Up, Sp, Vtp, m, n, p, 0, MPI_COMM_WORLD) != 0)
+    {
+        MPI_Finalize();
+        return 1;
+    }
 
     /*
      * Compute and report errors
