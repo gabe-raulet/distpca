@@ -54,6 +54,12 @@ int main(int argc, char *argv[])
 
     int intparams[3];
 
+    mpi_timer_t timer;
+    double maxtime, proctime;
+
+    mpi_timer_init(&timer, MPI_COMM_WORLD);
+    mpi_timer_start(&timer);
+
     if (!myrank)
     {
         /*
@@ -107,6 +113,11 @@ int main(int argc, char *argv[])
         MPI_Finalize();
         return 1;
     }
+
+    mpi_timer_stop(&timer);
+    mpi_timer_query(&timer, &maxtime, &proctime);
+
+    if (!myrank) fprintf(stderr, "[read_input::main::maxtime=%.5f(s)::proctime=%.5f(s)] finished\n", maxtime, proctime);
 
     /*
      * Distribute A to Aloc
