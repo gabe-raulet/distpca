@@ -35,9 +35,26 @@ int main(int argc, char *argv[])
 
     A = mmread_centered(argv[optind], &n, &d);
 
-    mmwrite("Acentered.mtx", A, n, d);
+    double *Up, *Sp, *Vtp;
+
+    Up = malloc(n*p*sizeof(double));
+    Sp = malloc(p*sizeof(double));
+    Vtp = malloc(p*d*sizeof(double));
+
+    svds_naive(A, Up, Sp, Vtp, n, d, p);
+
+    FILE *f = fopen("principal_values.txt", "w");
+    for (int i = 0; i < p; ++i)
+        fprintf(f, "%.18e\n", Sp[i]);
+    fclose(f);
+
+    mmwrite("principal_directions.mtx", Vtp, p, d);
 
     free(A);
+    free(Up);
+    free(Sp);
+    free(Vtp);
+
     return 0;
 }
 
