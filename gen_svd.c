@@ -15,7 +15,7 @@ typedef struct
     int seed; /* random seed */
     double cond; /* DLATMS cond (mode 1..5) or condition number (mode < 0) */
     double dmax; /* DLATMS dmax (mode 1..5) or damping factor (mode < 0) */
-    char *label; /* generate files {A,U,Vt}_{label}.mtx and S_{label}.diag */
+    char *label; /* generate files {label}_{A,U,Vt}.mtx and {label}_S.diag */
 } params_t;
 
 int params_init(params_t *ps);
@@ -67,16 +67,16 @@ int main(int argc, char *argv[])
 
     char fname[1024];
 
-    snprintf(fname, 1024, "A_%s.mtx", label);
+    snprintf(fname, 1024, "%s_A.mtx", label);
     mmwrite(fname, A, m, n);
 
-    snprintf(fname, 1024, "U_%s.mtx", label);
+    snprintf(fname, 1024, "%s_U.mtx", label);
     mmwrite(fname, U, m, n);
 
-    snprintf(fname, 1024, "Vt_%s.mtx", label);
+    snprintf(fname, 1024, "%s_Vt.mtx", label);
     mmwrite(fname, Vt, n, n);
 
-    snprintf(fname, 1024, "S_%s.diag", label);
+    snprintf(fname, 1024, "%s_S.diag", label);
 
     FILE *f = fopen(fname, "w");
     for (int i = 0; i < n; ++i)
