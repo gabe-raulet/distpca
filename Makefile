@@ -17,6 +17,10 @@ endif
 
 all: $(PROGS)
 
+test: gen_svd dist_svd
+	python gen_svd_cases.py
+	python test_svd_cases.py
+
 gen_svd: gen_svd.c $(FILES)
 	$(MPICC) $(CFLAGS) $(INCS) $(LIBS) $(LINKS) -o $@ $^
 

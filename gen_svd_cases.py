@@ -24,7 +24,12 @@ if __name__ == "__main__":
     else:
         target.mkdir()
 
-    colcnts = 2**np.arange(8,12)
+    # colcnts = 2**np.arange(8,12)
+    # rowscales = [1,2,4]
+    # cvals = [2, 100]
+    # dvals = [2, 4, 20, 88]
+
+    colcnts = 2**np.arange(8,9)
     rowscales = [1,2,4]
     cvals = [2, 100]
     dvals = [2, 4, 20, 88]
