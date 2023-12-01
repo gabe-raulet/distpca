@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
     int m; /* (rank[0..nprocs-1]) rows of A */
     int n; /* (rank[0..nprocs-1]) columns of A */
     int p; /* (rank[0..nprocs-1]) SVD truncation parameter */
+    int s; /* (rank[0..nprocs-1]) columns of Aloc; equals n/nprocs */
     double *A; /* (rank[0]) m-by-n A matrix */
     double *S; /* (rank[0]) n-by-n diagonal S matrix (ground truth) */
     double *U; /* (rank[0]) m-by-n U matrix (ground truth) */
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
     double *Sp; /* (rank[0]) p-by-p diagonal Sp matrix (computed) */
     double *Up; /* (rank[0]) m-by-p Up matrix (computed) */
     double *Vtp; /* (rank[0]) p-by-n Vtp matrix (computed) */
-    double *Aloc; /* (rank[myrank]) m-by-(n/nprocs) matrix A[:,myrank*(n/nprocs):(myrank+1)*(n/nprocs)] */
+    double *Aloc; /* (rank[myrank]) m-by-s) matrix A[:,myrank*s:(myrank+1)*s] */
 
     if (argc != 6)
     {
@@ -77,7 +78,11 @@ int main(int argc, char *argv[])
     }
 
     MPI_Bcast(intparams, 3, MPI_INT, 0, MPI_COMM_WORLD);
-    m = intparams[0], n = intparams[1], p = intparams[2];
+
+    m = intparams[0];
+    n = intparams[1];
+    p = intparams[2];
+    s = n / nprocs;
 
     if (!(1 <= n && n <= m) || (m&(m-1)) || (n&(n-1)))
     {
@@ -86,6 +91,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    if (p > n || n % nprocs != 0 || p > s)
+    {
+        if (!myrank) fprintf(stderr, "[error::main][p=%d,n=%d,nprocs=%d] must have p <= n, n %% nprocs == 0, and p <= n/nprocs\n", p, n, nprocs);
+        MPI_Finalize();
+        return 1;
+    }
 
     /*
      * Distribute A to Aloc
