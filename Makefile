@@ -1,7 +1,8 @@
-MPICC=cc
-INCS=-I./inc
-LIBS=
-LINKS=
+CC=clang
+MPICC=mpicc
+INCS=-I/opt/homebrew/Cellar/openblas/0.3.24/include -I/opt/homebrew/include -I./inc
+LIBS=-L/opt/homebrew/Cellar/lapack/3.12.0/lib -L/opt/homebrew/Cellar/openblas/0.3.24/lib
+LINKS=-llapacke -lopenblas
 PROGS=gen_svd dist_svd proto_pca
 FILES=svd_algs.c svd_utils.c mmio.c mmio_dense.c kiss.c utils.c
 CFLAGS=-Wall
