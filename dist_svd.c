@@ -102,6 +102,16 @@ int main(int argc, char *argv[])
      * Distribute A to Aloc
      */
 
+    if (!myrank)
+    {
+        Up = malloc(m*p*sizeof(double));
+        Sp = malloc(p*sizeof(double));
+        Vtp = malloc(p*n*sizeof(double));
+    }
+
+    Aloc = malloc(m*s*sizeof(double));
+    MPI_Scatter(A, m*s, MPI_DOUBLE, Aloc, m*s, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
     /*
      * Run distributed SVD
      */
@@ -122,7 +132,7 @@ int main(int argc, char *argv[])
         free(Vt);
     }
 
-    (void)Aloc;
+    free(Aloc);
     (void)Sp;
     (void)Up;
     (void)Vtp;
