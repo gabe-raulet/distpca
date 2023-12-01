@@ -15,6 +15,13 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
+    if (nprocs == 1 || (nprocs&(nprocs-1)))
+    {
+        if (!myrank) fprintf(stderr, "[error::main][nprocs=%d] nprocs must be a power of 2 greater than 1\n", nprocs);
+        MPI_Finalize();
+        return 1;
+    }
+
     int m; /* (rank[0..nprocs-1]) rows of A */
     int n; /* (rank[0..nprocs-1]) columns of A */
     int p; /* (rank[0..nprocs-1]) SVD truncation parameter */
@@ -27,16 +34,58 @@ int main(int argc, char *argv[])
     double *Vtp; /* (rank[0]) p-by-n Vtp matrix (computed) */
     double *Aloc; /* (rank[myrank]) m-by-(n/nprocs) matrix A[:,myrank*(n/nprocs):(myrank+1)*(n/nprocs)] */
 
-    /*
-     * Read inputs.
-     */
+    if (argc != 6)
+    {
+        if (!myrank) fprintf(stderr, "Usage: %s <A.mtx> <S.diag> <U.mtx> <Vt.mtx> <p>\n", argv[0]);
+        MPI_Finalize();
+        return 1;
+    }
+
+    int intparams[3];
 
     if (!myrank)
     {
         /*
          * Read A, S, U, and Vt
          */
+        char *Afname, *Sfname, *Ufname, *Vtfname;
+        int tmp[2];
+
+        Afname = argv[1];
+        A = mmread(Afname, &m, &n);
+
+        Sfname = argv[2];
+        S = malloc(n*sizeof(double));
+        FILE *f = fopen(Sfname, "r");
+        for (int i = 0; i < n; ++i)
+            fscanf(f, "%lg\n", S+i);
+        fclose(f);
+
+        Ufname = argv[3];
+        U = mmread(Ufname, tmp, tmp+1);
+        assert(m==tmp[0] && n==tmp[1]);
+
+        Vtfname = argv[4];
+        Vt = mmread(Vtfname, tmp, tmp+1);
+        assert(n==tmp[0] && n==tmp[1]);
+
+        p = atoi(argv[5]);
+
+        intparams[0] = m, intparams[1] = n, intparams[2] = p;
+
+        fprintf(stderr, "[sanity::main][m=%d,n=%d,p=%d,nprocs=%d]\n", m, n, p, nprocs);
     }
+
+    MPI_Bcast(intparams, 3, MPI_INT, 0, MPI_COMM_WORLD);
+    m = intparams[0], n = intparams[1], p = intparams[2];
+
+    if (!(1 <= n && n <= m) || (m&(m-1)) || (n&(n-1)))
+    {
+        if (!myrank) fprintf(stderr, "[error::main][m=%d,n=%d] must have 1 <= n <= m with n and m both being powers of 2\n", m, n);
+        MPI_Finalize();
+        return 1;
+    }
+
 
     /*
      * Distribute A to Aloc
@@ -53,6 +102,19 @@ int main(int argc, char *argv[])
     /*
      * Clean up
      */
+
+    if (!myrank)
+    {
+        free(A);
+        free(S);
+        free(U);
+        free(Vt);
+    }
+
+    (void)Aloc;
+    (void)Sp;
+    (void)Up;
+    (void)Vtp;
 
     MPI_Finalize();
     return 0;
