@@ -43,12 +43,17 @@ int main(int argc, char *argv[])
 
     svds_naive(A, Up, Sp, Vtp, n, d, p);
 
-    FILE *f = fopen("principal_values.txt", "w");
+    for (int i = 0; i < p; ++i)
+    {
+        Sp[i] = (Sp[i]*Sp[i])/(n-1.0);
+    }
+
+    FILE *f = fopen("expvar.txt", "w");
     for (int i = 0; i < p; ++i)
         fprintf(f, "%.18e\n", Sp[i]);
     fclose(f);
 
-    mmwrite("principal_directions.mtx", Vtp, p, d);
+    mmwrite("princomps.mtx", Vtp, p, d);
 
     free(A);
     free(Up);
