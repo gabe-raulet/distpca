@@ -12,6 +12,11 @@ int log2i(int v)
     return x;
 }
 
+double* dalloc(size_t n, int clear)
+{
+    return clear? calloc(n, sizeof(double)) : malloc(n*sizeof(double));
+}
+
 static int iseed_prv[4];
 static int initialized = 0;
 

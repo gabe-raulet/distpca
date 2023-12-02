@@ -47,15 +47,15 @@ int main(int argc, char *argv[])
 
     int r = m < n? m : n;
 
-    double *A = malloc(m*n*sizeof(double));
-    double *S = malloc(r*sizeof(double));
+    double *A = dalloc(m*n, 0);
+    double *S = dalloc(r, 0);
 
     iseed_get(iseed);
     gen_test_mat(A, S, m, n, mode, cond, dmax, iseed);
 
-    double *Scheck = malloc(r*sizeof(double));
-    double *U = malloc(m*r*sizeof(double));
-    double *Vt = malloc(r*n*sizeof(double));
+    double *Scheck = dalloc(r, 0);
+    double *U = dalloc(m*r, 0);
+    double *Vt = dalloc(r*n, 0);
 
     gen_uv_mats(A, Scheck, U, Vt, m, n);
 
@@ -97,8 +97,8 @@ int gen_uv_mats(const double *A, double *S, double *U, double *Vt, int m, int n)
 {
     int r = m < n? m : n;
 
-    double *Al = malloc(m*n*sizeof(double));
-    double *work = malloc(5*r*sizeof(double));
+    double *Al = dalloc(m*n, 0);
+    double *work = dalloc(5*r, 0);
 
     memcpy(Al, A, m*n*sizeof(double));
 

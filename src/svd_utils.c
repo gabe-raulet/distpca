@@ -8,6 +8,7 @@
 #include "lapacke.h"
 #include "svd_utils.h"
 #include "mmio_dense.h"
+#include "utils.h"
 
 double l2dist(const double *x, const double *y, int n)
 {
@@ -29,10 +30,10 @@ int svds_naive(double *A, double *Up, double *Sp, double *Vpt, int m, int n, int
 
     double *S, *U, *Vt, *work;
 
-    work = malloc(5*r*sizeof(double));
-    S = malloc(r*sizeof(double));
-    U = malloc(m*r*sizeof(double));
-    Vt = malloc(r*n*sizeof(double));
+    work = dalloc(5*r, 0);
+    S = dalloc(r, 0);
+    U = dalloc(m*r, 0);
+    Vt = dalloc(r*n, 0);
 
     LAPACKE_dgesvd(LAPACK_COL_MAJOR, 'S', 'S', m, n, A, m, S, U, m, Vt, r, work);
 
@@ -66,12 +67,12 @@ double* combine_routine(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, doub
     s = n / b;
     d = (1 << (k-1)) * s;
 
-    Aki = malloc(m*(2*p)*sizeof(double));
+    Aki = dalloc(m*(2*p), 0);
 
     memcpy(&Aki[0],   Ak_2i_0, m*p*sizeof(double));
     memcpy(&Aki[m*p], Ak_2i_1, m*p*sizeof(double));
 
-    Vhtki = calloc((2*p)*(2*d), sizeof(double));
+    Vhtki = dalloc((2*p)*(2*d), 1);
 
     for (int j = 0; j < d; ++j)
     {
@@ -79,8 +80,8 @@ double* combine_routine(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, doub
         memcpy(&Vhtki[(j+d)*(2*p)+p], &Vtk_2i_1[j*p], p*sizeof(double));
     }
 
-    Ski = malloc(p*sizeof(double));
-    Vtki = malloc(p*(2*p)*sizeof(double));
+    Ski = dalloc(p, 0);
+    Vtki = dalloc(p*(2*p), 0);
 
     svds_naive(Aki, USki, Ski, Vtki, m, 2*p, p);
 
@@ -90,7 +91,7 @@ double* combine_routine(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, doub
 
     free(Ski);
 
-    W = malloc((2*d)*p*sizeof(double));
+    W = dalloc((2*d)*p, 0);
 
     cblas_dgemm(CblasColMajor, CblasTrans, CblasTrans, 2*d, p, 2*p, 1.0, Vhtki, 2*p, Vtki, p, 0.0, W, 2*d);
 
@@ -98,7 +99,7 @@ double* combine_routine(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, doub
     free(Vhtki);
 
     assert(2*d >= p);
-    tau = malloc(p*sizeof(double));
+    tau = dalloc(p, 0);
 
     LAPACKE_dgeqrf(LAPACK_COL_MAJOR, 2*d, p, W, 2*d, tau);
     LAPACKE_dtrtri(LAPACK_COL_MAJOR, 'U', 'N', p, W, 2*d);
@@ -154,8 +155,8 @@ int extract_node(double *Aq1_11, double *Vtq1_11, double *Aq1_12, double *Vtq1_1
 {
     double *USq, *Qq, *Vtp;
 
-    USq = malloc(m*p*sizeof(double));
-    Vtp = malloc(p*n*sizeof(double));
+    USq = dalloc(m*p, 0);
+    Vtp = dalloc(p*n, 0);
 
     Qq = combine_routine(Aq1_11, Vtq1_11, Aq1_12, Vtq1_12, USq, m, n, q, q, p);
 

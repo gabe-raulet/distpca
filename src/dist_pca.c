@@ -91,16 +91,16 @@ int main(int argc, char *argv[])
 
     if (!myrank)
     {
-        Up = malloc(n*p*sizeof(double));
-        Sp = malloc(p*sizeof(double));
-        Vtp = malloc(p*d*sizeof(double));
+        Up = dalloc(n*p, 0);
+        Sp = dalloc(p, 0);
+        Vtp = dalloc(p*d, 0);
     }
     else
     {
         Up = Sp = Vtp = NULL;
     }
 
-    Aloc = malloc(n*s*sizeof(double));
+    Aloc = dalloc(n*s, 0);
     MPI_Scatter(A, n*s, MPI_DOUBLE, Aloc, n*s, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     mpi_timer_stop(&timer);
@@ -166,7 +166,7 @@ double* mmread_centered(char const *fname, int *n, int *d)
     mm_read_banner(f, &matcode);
     assert(mm_is_dense(matcode));
     mm_read_mtx_array_size(f, &N, &D);
-    A = malloc(N*D*sizeof(double));
+    A = dalloc(N*D, 0);
     assert(A != NULL);
 
     for (j = 0; j < D; ++j)

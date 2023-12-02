@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
         r = m < n? m : n;
 
         Sfname = argv[2];
-        S = malloc(r*sizeof(double));
+        S = dalloc(r, 0);
         FILE *f = fopen(Sfname, "r");
         for (int i = 0; i < r; ++i)
             fscanf(f, "%lg\n", S+i);
@@ -134,16 +134,16 @@ int main(int argc, char *argv[])
 
     if (!myrank)
     {
-        Up = malloc(m*p*sizeof(double));
-        Sp = malloc(p*sizeof(double));
-        Vtp = malloc(p*n*sizeof(double));
+        Up = dalloc(m*p, 0);
+        Sp = dalloc(p, 0);
+        Vtp = dalloc(p*n, 0);
     }
     else
     {
         Up = Sp = Vtp = NULL;
     }
 
-    Aloc = malloc(m*s*sizeof(double));
+    Aloc = dalloc(m*s, 0);
     MPI_Scatter(A, m*s, MPI_DOUBLE, Aloc, m*s, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     mpi_timer_stop(&timer);
@@ -225,7 +225,7 @@ int compute_errors
     int d = m > n? m : n;
 
     double Aerr, Serr, Uerr, Verr;
-    double *mem = malloc(d*d*sizeof(double));
+    double *mem = dalloc(d*d, 0);
 
     /*
      * Compute Aerr = normF(A - Up@Sp@Vtp).

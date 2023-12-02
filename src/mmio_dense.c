@@ -1,5 +1,6 @@
 #include "mmio_dense.h"
 #include "mmio.h"
+#include "utils.h"
 #include <stdlib.h>
 #include <assert.h>
 
@@ -14,7 +15,7 @@ int mmio_read_dense(FILE *f, double **A_ref, int *M, int *N, int row_major)
     mm_read_banner(f, &matcode);
     assert(mm_is_dense(matcode));
     mm_read_mtx_array_size(f, &m, &n);
-    A = malloc(m*n*sizeof(double));
+    A = dalloc(m*n, 0);
     assert(A != NULL);
 
     if (!row_major)

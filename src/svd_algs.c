@@ -26,7 +26,7 @@ int svd_serial
      * DEPRECATED: haven't tried updating so it works for short and wide matrices
      */
 
-    double *Al = malloc(m*n*sizeof(double));
+    double *Al = dalloc(m*n, 0);
     memcpy(Al, A, m*n*sizeof(double));
 
     int q = log2i(b);
@@ -40,8 +40,8 @@ int svd_serial
         return -1;
     }
 
-    double *Acat = malloc(m*p*b*sizeof(double));
-    double *Vtcat = malloc(p*s*b*sizeof(double)); /* note: s*b == n */
+    double *Acat = dalloc(m*p*b, 0);
+    double *Vtcat = dalloc(p*s*b, 0);
 
     double *Ai;
     double *A1i, *Vt1i;
@@ -117,15 +117,15 @@ int svd_dist
 
     double *A1i, *Vt1i;
 
-    A1i = malloc(m*s*sizeof(double));
-    Vt1i = malloc(s*p*sizeof(double));
+    A1i = dalloc(m*s, 0);
+    Vt1i = dalloc(s*p, 0);
 
     int q = log2i(nprocs);
 
     seed_node(Aloc, A1i, Vt1i, m, n, q, p);
 
-    double *Amem = malloc(2*m*p*sizeof(double));
-    double *Vtmem = malloc(n*p*sizeof(double)); /* this should be allocated with less memory depending on what myrank is */
+    double *Amem = dalloc(2*m*p, 0);
+    double *Vtmem = dalloc(n*p, 0); /* this should be allocated with less memory depending on what myrank is */
 
     if (myrank % 2 != 0)
     {
