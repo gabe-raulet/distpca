@@ -57,7 +57,7 @@ int svds_naive(const double *A, double *Up, double *Sp, double *Vpt, int m, int 
     return 0;
 }
 
-int combine_node(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, double *Vtk_2i_1, double *Ak1_lj, double *Vtk1_lj, int m, int n, int k, int q, int p)
+double* combine_routine(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, double *Vtk_2i_1, double *Ak1_lj, double *Vtk1_lj, double *USki, int m, int n, int k, int q, int p)
 {
     int b = 1 << q;
     int s = n / b;
@@ -76,13 +76,10 @@ int combine_node(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, double *Vtk
         memcpy(&Vhtki[(j+d)*(2*p)+p], &Vtk_2i_1[j*p], p*sizeof(double));
     }
 
-    double *Uki = malloc(m*p*sizeof(double));
     double *Ski = malloc(p*sizeof(double));
     double *Vtki = malloc(p*(2*p)*sizeof(double));
 
-    svds_naive(Aki, Uki, Ski, Vtki, m, 2*p, p);
-
-    double *USki = Uki;
+    svds_naive(Aki, USki, Ski, Vtki, m, 2*p, p);
 
     for (int j = 0; j < p; ++j)
         for (int i = 0; i < m; ++i)
@@ -107,6 +104,22 @@ int combine_node(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, double *Vtk
 
     LAPACKE_dorgqr(LAPACK_COL_MAJOR, 2*d, p, p, W, 2*d, tau);
 
+    free(tau);
+    free(Aki);
+
+    return W;
+}
+
+int combine_node(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, double *Vtk_2i_1, double *Ak1_lj, double *Vtk1_lj, int m, int n, int k, int q, int p)
+{
+    int b = 1 << q;
+    int s = n / b;
+    int d = (1 << (k-1)) * s;
+
+    double *USki = malloc(m*p*sizeof(double));
+
+    double *W = combine_routine(Ak_2i_0, Vtk_2i_0, Ak_2i_1, Vtk_2i_1, Ak1_lj, Vtk1_lj, USki, m, n, k, q, p);
+
     memcpy(Ak1_lj, USki, m*p*sizeof(double));
 
     /* Vtk1_lj[j,i] = W[i,j]; W is 2d-by-p */
@@ -115,10 +128,8 @@ int combine_node(double *Ak_2i_0, double *Vtk_2i_0, double *Ak_2i_1, double *Vtk
         for (int i = 0; i < 2*d; ++i)
             Vtk1_lj[j + i*p] = W[i + j*2*d];
 
-    free(Aki);
-    free(Uki);
+    free(USki);
     free(W);
-    free(tau);
 
     return 0;
 }
