@@ -27,8 +27,10 @@ if __name__ == "__main__":
     colcnts = 2**np.arange(8,10)
     rowscales = [1]
     # rowscales = [2,4]
-    cvals = [2, 100, 1000]
-    dvals = [1.1, 2, 100]
+    cvals = [100]
+    dvals = [2]
+    # cvals = [2, 100, 1000]
+    # dvals = [1.1, 2, 100]
     params = gen_params(colcnts, rowscales, cvals, dvals)
 
     for m, n, cond, dmax in params:
