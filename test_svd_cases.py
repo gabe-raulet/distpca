@@ -18,7 +18,7 @@ if __name__ == "__main__":
         Ufile = f"{label}U.mtx"
         Vtfile = f"{label}Vt.mtx"
         assert Path(Afile).is_file() and Path(Sfile).is_file() and Path(Ufile).is_file() and Path(Vtfile).is_file()
-        cmd = f"srun -n 8 -N 1 -c 2 --cpu_bind=cores ./dist_svd {Afile} {Sfile} {Ufile} {Vtfile} {p}"
+        cmd = f"mpirun --oversubscribe -np 16 ./dist_svd {Afile} {Sfile} {Ufile} {Vtfile} {p}"
         print(cmd)
         proc = sp.Popen(cmd.split(), stdout=sp.PIPE)
         proc.wait()
