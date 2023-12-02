@@ -25,8 +25,8 @@ if __name__ == "__main__":
     else:
         target.mkdir()
 
-    rowcnts = 2**np.arange(8,10)
-    colcnts = 2**np.arange(8,10)
+    rowcnts = 2**np.arange(8,11)
+    colcnts = 2**np.arange(8,11)
     cvals = [100]
     dvals = [2]
     modes = [-1, 2]

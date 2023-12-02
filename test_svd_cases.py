@@ -22,3 +22,4 @@ if __name__ == "__main__":
         print(cmd)
         proc = sp.Popen(cmd.split(), stdout=sp.PIPE)
         proc.wait()
+        print("\n")
