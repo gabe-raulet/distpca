@@ -33,7 +33,7 @@ if __name__ == "__main__":
     params = gen_params(rowcnts, colcnts, cvals, dvals, modes)
 
     for m, n, cond, dmax, mode in params:
-        label = str(target.joinpath(f"case_m{m}_n{n}_cond{cond}_dmax{dmax}_mode{mode}"))
+        label = str(target.joinpath(f"case_rows{m}_cols{n}_cond{cond}_dmax{dmax}_mode{mode}"))
         cmd = f"./gen_svd -m {m} -n {n} -u -1 -c {cond} -d {dmax} -u {mode} -o {label}"
         print(cmd)
         proc = sp.Popen(cmd.split(), stdout=sp.PIPE)
