@@ -4,13 +4,14 @@ import subprocess as sp
 from pathlib import Path
 from scipy.io import mmread, mmwrite
 
-def gen_params(colcnts, rowscales, cvals, dvals):
+def gen_params(rowcnts, colcnts, cvals, dvals, modes):
     params = []
-    for n in colcnts:
-        for scale in rowscales:
+    for m in rowcnts:
+        for n in colcnts:
             for cond in cvals:
                 for dmax in dvals:
-                    params.append((scale*n, n, cond, dmax))
+                    for mode in modes:
+                        params.append((m, n, cond, dmax, mode))
     return params
 
 if __name__ == "__main__":
@@ -24,18 +25,16 @@ if __name__ == "__main__":
     else:
         target.mkdir()
 
+    rowcnts = 2**np.arange(8,10)
     colcnts = 2**np.arange(8,10)
-    rowscales = [1, 2]
-    # rowscales = [2,4]
     cvals = [100]
     dvals = [2]
-    # cvals = [2, 100, 1000]
-    # dvals = [1.1, 2, 100]
-    params = gen_params(colcnts, rowscales, cvals, dvals)
+    modes = [-1, 2]
+    params = gen_params(rowcnts, colcnts, cvals, dvals, modes)
 
-    for m, n, cond, dmax in params:
-        label = str(target.joinpath(f"case_m{m}_n{n}_cond{cond}_dmax{dmax}"))
-        cmd = f"./gen_svd -m {m} -n {n} -u -1 -c {cond} -d {dmax} -o {label}"
+    for m, n, cond, dmax, mode in params:
+        label = str(target.joinpath(f"case_m{m}_n{n}_cond{cond}_dmax{dmax}_mode{mode}"))
+        cmd = f"./gen_svd -m {m} -n {n} -u -1 -c {cond} -d {dmax} -u {mode} -o {label}"
         print(cmd)
         proc = sp.Popen(cmd.split(), stdout=sp.PIPE)
         proc.wait()

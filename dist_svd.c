@@ -32,14 +32,19 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    /*
+     * NOTE: MUST ASSUME THAT p <= r AND p <= s
+     */
+
     int m; /* (rank[0..nprocs-1]) rows of A */
     int n; /* (rank[0..nprocs-1]) columns of A */
+    int r; /* (rank[0..nprocs-1]) = min(m, n) */
     int p; /* (rank[0..nprocs-1]) SVD truncation parameter */
     int s; /* (rank[0..nprocs-1]) columns of Aloc; equals n/nprocs */
     double *A; /* (rank[0]) m-by-n A matrix */
-    double *S; /* (rank[0]) n-by-n diagonal S matrix (ground truth) */
-    double *U; /* (rank[0]) m-by-n U matrix (ground truth) */
-    double *Vt; /* (rank[0]) n-by-n Vt matrix (ground truth) */
+    double *S; /* (rank[0]) r-by-r diagonal S matrix (ground truth) */
+    double *U; /* (rank[0]) m-by-r U matrix (ground truth) */
+    double *Vt; /* (rank[0]) r-by-n Vt matrix (ground truth) */
     double *Sp; /* (rank[0]) p-by-p diagonal Sp matrix (computed) */
     double *Up; /* (rank[0]) m-by-p Up matrix (computed) */
     double *Vtp; /* (rank[0]) p-by-n Vtp matrix (computed) */
@@ -70,21 +75,22 @@ int main(int argc, char *argv[])
 
         Afname = argv[1];
         A = mmread(Afname, &m, &n);
+        r = m < n? m : n;
 
         Sfname = argv[2];
-        S = malloc(n*sizeof(double));
+        S = malloc(r*sizeof(double));
         FILE *f = fopen(Sfname, "r");
-        for (int i = 0; i < n; ++i)
+        for (int i = 0; i < r; ++i)
             fscanf(f, "%lg\n", S+i);
         fclose(f);
 
         Ufname = argv[3];
         U = mmread(Ufname, tmp, tmp+1);
-        assert(m==tmp[0] && n==tmp[1]);
+        assert(m==tmp[0] && r==tmp[1]);
 
         Vtfname = argv[4];
         Vt = mmread(Vtfname, tmp, tmp+1);
-        assert(n==tmp[0] && n==tmp[1]);
+        assert(r==tmp[0] && n==tmp[1]);
 
         p = atoi(argv[5]);
 
@@ -99,17 +105,18 @@ int main(int argc, char *argv[])
     n = intparams[1];
     p = intparams[2];
     s = n / nprocs;
+    r = m < n? m : n; /* now everyone has it */
 
-    if (!(1 <= n && n <= m) || (m&(m-1)) || (n&(n-1)))
+    if (!(m >= 1 && n >= 1) || (m&(m-1)) || (n&(n-1)))
     {
-        if (!myrank) fprintf(stderr, "[error::main][m=%d,n=%d] must have 1 <= n <= m with n and m both being powers of 2\n", m, n);
+        if (!myrank) fprintf(stderr, "[error::main][m=%d,n=%d] must have m,n >= 1 with n and m both being powers of 2\n", m, n);
         MPI_Finalize();
         return 1;
     }
 
-    if (p > n || n % nprocs != 0 || p > s)
+    if (p > r || n % nprocs != 0 || p > s)
     {
-        if (!myrank) fprintf(stderr, "[error::main][p=%d,n=%d,nprocs=%d] must have p <= n, n %% nprocs == 0, and p <= n/nprocs\n", p, n, nprocs);
+        if (!myrank) fprintf(stderr, "[error::main][p=%d,min(m,n)=%d,n=%d,nprocs=%d] must have p <= min(m,n), n %% nprocs == 0, and p <= n/nprocs\n", p, r, n, nprocs);
         MPI_Finalize();
         return 1;
     }
@@ -214,8 +221,11 @@ int compute_errors
     double errs[4]
 )
 {
+    int r = m < n? m : n;
+    int d = m > n? m : n;
+
     double Aerr, Serr, Uerr, Verr;
-    double *mem = malloc(m*m*sizeof(double));
+    double *mem = malloc(d*d*sizeof(double));
 
     /*
      * Compute Aerr = normF(A - Up@Sp@Vtp).
@@ -250,6 +260,8 @@ int compute_errors
 
     /*
      * Compute Uerr = normF(U[:,:p]@U[:,:p].T - Up@Up.T).
+     *
+     * U is m-by-r, Up is m-by-p, p <= r.
      */
 
     for (int j = 0; j < m; ++j)
@@ -272,6 +284,8 @@ int compute_errors
 
     /*
      * Compute Verr = normF(Vt[:p,:].T@Vt[:p,:] - Vtp.T@Vtp).
+     *
+     * Vt is r-by-n, Vtp is p-by-n, p <= r.
      */
 
     for (int j = 0; j < n; ++j)
@@ -281,7 +295,7 @@ int compute_errors
 
             for (int k = 0; k < p; ++k)
             {
-                acc += Vt[k + i*n]*Vt[k + j*n];
+                acc += Vt[k + i*r]*Vt[k + j*r];
                 acc -= Vtp[k + i*p]*Vtp[k + j*p];
             }
 

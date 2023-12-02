@@ -22,6 +22,10 @@ int svd_serial
     int b /* number of seed nodes in binary topology */
 )
 {
+    /*
+     * DEPRECATED: haven't tried updating so it works for short and wide matrices
+     */
+
     double *Al = malloc(m*n*sizeof(double));
     memcpy(Al, A, m*n*sizeof(double));
 
@@ -105,9 +109,11 @@ int svd_dist
     MPI_Comm_rank(comm, &myrank);
     MPI_Comm_size(comm, &nprocs);
 
-    assert(n % nprocs == 0);
-
+    int r = m < n? m : n;
     int s = n / nprocs;
+
+    assert(n % nprocs == 0);
+    assert(p <= r && p <= s);
 
     double *A1i, *Vt1i;
 
