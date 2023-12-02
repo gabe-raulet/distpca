@@ -139,7 +139,7 @@ int seed_node(double *Ai, double *A1i, double *Vt1i, int m, int n, int q, int p)
     int b = 1 << q;
     int s = n / b;
 
-    double *Sp = malloc(p*sizeof(double));
+    double *Sp = dalloc(p, 0);
 
     svds_naive(Ai, A1i, Sp, Vt1i, m, s, p);
 
