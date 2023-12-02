@@ -11,7 +11,7 @@
 #include "mmio.h"
 
 int p = 10;
-char *fname = NULL;
+char *Afname, *PCfname, *expvarfname;
 
 int usage(char *argv[]);
 double* mmread_centered(char const *fname, int *n, int *d);
@@ -23,6 +23,13 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
+    if (argc != 5)
+    {
+        if (!myrank) fprintf(stderr, "Usage: %s <A.mtx> <PC.mtx> <expvar.txt> <p>\n", argv[0]);
+        MPI_Finalize();
+        return 1;
+    }
+
     if (nprocs == 1 || (nprocs&(nprocs-1)))
     {
         if (!myrank) fprintf(stderr, "[error::main][nprocs=%d] nprocs must be a power of 2 greater than 1\n", nprocs);
@@ -30,12 +37,11 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (argc != 3)
-    {
-        if (!myrank) fprintf(stderr, "Usage: %s <A.mtx> <p>\n", argv[0]);
-        MPI_Finalize();
-        return 1;
-    }
+
+    Afname = argv[1];
+    PCfname = argv[2];
+    expvarfname = argv[3];
+    p = atoi(argv[4]);
 
     int n, d;
     double *A, *Aloc;
@@ -48,10 +54,8 @@ int main(int argc, char *argv[])
 
     if (!myrank)
     {
-        A = mmread_centered(argv[1], &n, &d);
+        A = mmread_centered(Afname, &n, &d);
     }
-
-    p = atoi(argv[2]);
 
     MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&d, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -126,12 +130,12 @@ int main(int argc, char *argv[])
             Sp[i] = (Sp[i]*Sp[i])/(n-1.0);
         }
 
-        FILE *f = fopen("expvar.txt", "w");
+        FILE *f = fopen(expvarfname, "w");
         for (int i = 0; i < p; ++i)
             fprintf(f, "%.18e\n", Sp[i]);
         fclose(f);
 
-        mmwrite("princomps.mtx", Vtp, p, d);
+        mmwrite(PCfname, Vtp, p, d);
     }
 
     mpi_timer_stop(&timer);
@@ -149,14 +153,6 @@ int main(int argc, char *argv[])
     free(Aloc);
 
     return 0;
-}
-
-int usage(char *argv[])
-{
-    fprintf(stderr, "Usage: %s [options] <input.mtx>\n", argv[0]);
-    fprintf(stderr, "Options: -p INT   number of principal components [%d]\n", p);
-    fprintf(stderr, "         -h       help message\n");
-    return 1;
 }
 
 double* mmread_centered(char const *fname, int *n, int *d)

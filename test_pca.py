@@ -5,11 +5,11 @@ from sklearn.decomposition import PCA
 def read_diag(fname):
     return np.array([np.double(line.rstrip()) for line in open(fname)])
 
-components = mmread("princomps.mtx")
+components = mmread("PC.mtx")
 explained_variance = read_diag("expvar.txt")
 p = len(explained_variance)
 
-X = mmread("A_out.mtx")
+X = mmread("test_A.mtx")
 pca = PCA(n_components=p, svd_solver="full")
 t = pca.fit_transform(X)
 
