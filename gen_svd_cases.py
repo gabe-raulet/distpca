@@ -25,7 +25,7 @@ if __name__ == "__main__":
         target.mkdir()
 
     colcnts = 2**np.arange(8,10)
-    rowscales = [1]
+    rowscales = [1, 2]
     # rowscales = [2,4]
     cvals = [100]
     dvals = [2]

@@ -23,17 +23,18 @@ double l2dist(const double *x, const double *y, int n)
 
 int svds_naive(const double *A, double *Up, double *Sp, double *Vpt, int m, int n, int p)
 {
-    assert(A != NULL && Up != NULL && Sp != NULL && Vpt != NULL && m >= n && n >= p && p >= 1);
+    int r = m < n? m : n;
+
+    assert(A != NULL && Up != NULL && Sp != NULL && Vpt != NULL && r >= p && p >= 1);
 
     double *S, *U, *Vt, *work, *Acast = (double *)A;
-    int drank = m < n? m : n;
 
-    work = malloc(5*drank*sizeof(double));
-    S = malloc(drank*sizeof(double));
-    U = malloc(m*drank*sizeof(double));
-    Vt = malloc(drank*n*sizeof(double));
+    work = malloc(5*r*sizeof(double));
+    S = malloc(r*sizeof(double));
+    U = malloc(m*r*sizeof(double));
+    Vt = malloc(r*n*sizeof(double));
 
-    LAPACKE_dgesvd(LAPACK_COL_MAJOR, 'S', 'S', m, n, Acast, m, S, U, m, Vt, drank, work);
+    LAPACKE_dgesvd(LAPACK_COL_MAJOR, 'S', 'S', m, n, Acast, m, S, U, m, Vt, r, work);
 
     memcpy(Up, U, p*m*sizeof(double));
     memcpy(Sp, S, p*sizeof(double));
@@ -41,12 +42,12 @@ int svds_naive(const double *A, double *Up, double *Sp, double *Vpt, int m, int 
     double *Vt_ptr = Vt;
     double *Vpt_ptr = Vpt;
 
-    for (int j = 0; j < n; ++j)
+    for (int j = 0; j < r; ++j)
     {
         memcpy(Vpt_ptr, Vt_ptr, p*sizeof(double));
 
         Vpt_ptr += p;
-        Vt_ptr += n;
+        Vt_ptr += r;
     }
 
     free(S);
