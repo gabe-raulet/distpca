@@ -25,15 +25,17 @@ if __name__ == "__main__":
     else:
         target.mkdir()
 
-    rowcnts = 2**np.arange(8,11)
-    colcnts = 2**np.arange(8,11)
+    # rowcnts = 2**np.arange(10,12)
+    # colcnts = 2**np.arange(10,12)
+    rowcnts = [512, 1024]
+    colcnts = [1024, 2048]
     cvals = [100]
     dvals = [2]
-    modes = [-1, 2]
+    modes = [-1]
     params = gen_params(rowcnts, colcnts, cvals, dvals, modes)
 
     for m, n, cond, dmax, mode in params:
-        label = str(target.joinpath(f"case_m{m}_n{n}_cond{cond}_dmax{dmax}_mode{mode}"))
+        label = str(target.joinpath(f"case_rows{m}_cols{n}_cond{cond}_dmax{dmax}_mode{mode}"))
         cmd = f"./gen_svd -m {m} -n {n} -u -1 -c {cond} -d {dmax} -u {mode} -o {label}"
         print(cmd)
         proc = sp.Popen(cmd.split(), stdout=sp.PIPE)

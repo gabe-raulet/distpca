@@ -15,7 +15,7 @@ else
 CFLAGS+=-O2
 endif
 
-all: $(PROGS)
+all: gen_svd
 
 test: dist_svd gen_svd
 	python gen_svd_cases.py
