@@ -3,7 +3,7 @@ INCS=-I./inc
 LIBS=
 LINKS=
 PROGS=gen_svd dist_svd dist_pca
-FILES=svd_algs.c svd_utils.c mmio.c mmio_dense.c kiss.c utils.c
+FILES=src/svd_algs.c src/svd_utils.c src/mmio.c src/mmio_dense.c src/kiss.c src/utils.c
 CFLAGS=-Wall
 
 D?=0
@@ -16,16 +16,17 @@ endif
 
 all: $(PROGS)
 
-gen_svd: gen_svd.c $(FILES)
+test: dist_svd gen_svd
+	python gen_svd_cases.py
+	python test_svd_cases.py
+
+gen_svd: src/gen_svd.c $(FILES)
 	$(MPICC) $(CFLAGS) $(INCS) $(LIBS) $(LINKS) -o $@ $^
 
-proto_pca: proto_pca.c $(FILES)
+dist_svd: src/dist_svd.c $(FILES)
 	$(MPICC) $(CFLAGS) $(INCS) $(LIBS) $(LINKS) -o $@ $^
 
-dist_svd: dist_svd.c $(FILES)
-	$(MPICC) $(CFLAGS) $(INCS) $(LIBS) $(LINKS) -o $@ $^
-
-dist_pca: dist_pca.c $(FILES)
+dist_pca: src/dist_pca.c $(FILES)
 	$(MPICC) $(CFLAGS) $(INCS) $(LIBS) $(LINKS) -o $@ $^
 
 clear:
