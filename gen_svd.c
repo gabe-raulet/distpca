@@ -45,24 +45,26 @@ int main(int argc, char *argv[])
 
     assert(label != NULL);
 
+    int r = m < n? m : n;
+
     double *A = malloc(m*n*sizeof(double));
-    double *S = malloc(n*sizeof(double));
+    double *S = malloc(r*sizeof(double));
 
     iseed_get(iseed);
     gen_test_mat(A, S, m, n, mode, cond, dmax, iseed);
 
-    double *Scheck = malloc(n*sizeof(double));
-    double *U = malloc(m*n*sizeof(double));
-    double *Vt = malloc(n*n*sizeof(double));
+    double *Scheck = malloc(r*sizeof(double));
+    double *U = malloc(m*r*sizeof(double));
+    double *Vt = malloc(r*n*sizeof(double));
 
     gen_uv_mats(A, Scheck, U, Vt, m, n);
 
-    int show = n < 5? n : 5;
+    int show = r < 5? r : 5;
     fprintf(stderr, "[gen_svd:main] diag(S)[0..%d] = ", show-1);
     for (int i = 0; i < show; ++i) fprintf(stderr, "%.3e,", S[i]);
-    fprintf(stderr, "%s\n", n < 5? "" : "...");
+    fprintf(stderr, "%s\n", r < 5? "" : "...");
 
-    fprintf(stderr, "[gen_svd:main] err=%.18e (DLATMS-vs-DGESVD) [S :: singular values]\n", l2dist(S, Scheck, n));
+    fprintf(stderr, "[gen_svd:main] err=%.18e (DLATMS-vs-DGESVD) [S :: singular values]\n", l2dist(S, Scheck, r));
     free(Scheck);
 
     char fname[1024];
@@ -71,15 +73,15 @@ int main(int argc, char *argv[])
     mmwrite(fname, A, m, n);
 
     snprintf(fname, 1024, "%s_U.mtx", label);
-    mmwrite(fname, U, m, n);
+    mmwrite(fname, U, m, r);
 
     snprintf(fname, 1024, "%s_Vt.mtx", label);
-    mmwrite(fname, Vt, n, n);
+    mmwrite(fname, Vt, r, n);
 
     snprintf(fname, 1024, "%s_S.diag", label);
 
     FILE *f = fopen(fname, "w");
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < r; ++i)
         fprintf(f, "%.18e\n", S[i]);
     fclose(f);
 
@@ -93,12 +95,14 @@ int main(int argc, char *argv[])
 
 int gen_uv_mats(const double *A, double *S, double *U, double *Vt, int m, int n)
 {
+    int r = m < n? m : n;
+
     double *Al = malloc(m*n*sizeof(double));
-    double *work = malloc(5*n*sizeof(double));
+    double *work = malloc(5*r*sizeof(double));
 
     memcpy(Al, A, m*n*sizeof(double));
 
-    LAPACKE_dgesvd(LAPACK_COL_MAJOR, 'S', 'S', m, n, Al, m, S, U, m, Vt, n, work);
+    LAPACKE_dgesvd(LAPACK_COL_MAJOR, 'S', 'S', m, n, Al, m, S, U, m, Vt, r, work);
 
     free(Al);
     free(work);
@@ -108,11 +112,13 @@ int gen_uv_mats(const double *A, double *S, double *U, double *Vt, int m, int n)
 
 int gen_test_mat(double *A, double *S, int m, int n, int mode, double cond, double dmax, int iseed[4])
 {
+    int r = m < n? m : n;
+
     if (mode < 0)
     {
         S[0] = cond;
 
-        for (int i = 1; i < n; ++i)
+        for (int i = 1; i < r; ++i)
             S[i] = S[i-1] / dmax;
 
         mode = 0;
@@ -188,9 +194,9 @@ int param_check(const params_t *ps)
     int m = ps->m, n = ps->n, mode = ps->mode;
     double cond = ps->cond, dmax = ps->dmax;
 
-    if (!(1 <= n && n <= m) || (m&(m-1)) || (n&(n-1)))
+    if (!(m >= 1 && n >= 1) || (m&(m-1)) || (n&(n-1)))
     {
-        fprintf(stderr, "[error::param_check][m=%d,n=%d] must have 1 <= n <= m with n and m both being powers of 2\n", m, n);
+        fprintf(stderr, "[error::param_check][m=%d,n=%d] must have m,n >= 1 with n and m both being powers of 2\n", m, n);
         return 1;
     }
 

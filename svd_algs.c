@@ -12,7 +12,7 @@
 
 int svd_serial
 (
-    double const *A, /* input m-by-n matrx */
+    double *A, /* input m-by-n matrx */
     double *Up, /* output m-by-p matrix */
     double *Sp, /* output p-by-p diagonal matrix */
     double *Vtp, /* output p-by-n matrix */
@@ -22,6 +22,10 @@ int svd_serial
     int b /* number of seed nodes in binary topology */
 )
 {
+    /*
+     * DEPRECATED: haven't tried updating so it works for short and wide matrices
+     */
+
     double *Al = malloc(m*n*sizeof(double));
     memcpy(Al, A, m*n*sizeof(double));
 
@@ -39,7 +43,7 @@ int svd_serial
     double *Acat = malloc(m*p*b*sizeof(double));
     double *Vtcat = malloc(p*s*b*sizeof(double)); /* note: s*b == n */
 
-    double const *Ai;
+    double *Ai;
     double *A1i, *Vt1i;
 
     for (int i = 0; i < b; ++i)
@@ -90,7 +94,7 @@ int svd_serial
 
 int svd_dist
 (
-    double const *Aloc, /* (rank[myrank]) input m-by-(n/nprocs) matrix */
+    double *Aloc, /* (rank[myrank]) input m-by-(n/nprocs) matrix */
     double *Up, /* (rank[root]) output m-by-p matrix */
     double *Sp, /* (rank[root]) output p-by-p diagonal matrix */
     double *Vtp, /* (rank[root]) output p-by-n matrix */
@@ -105,9 +109,11 @@ int svd_dist
     MPI_Comm_rank(comm, &myrank);
     MPI_Comm_size(comm, &nprocs);
 
-    assert(n % nprocs == 0);
-
+    int r = m < n? m : n;
     int s = n / nprocs;
+
+    assert(n % nprocs == 0);
+    assert(p <= r && p <= s);
 
     double *A1i, *Vt1i;
 
