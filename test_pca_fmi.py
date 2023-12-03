@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     tcpunch.terminate()
     t1 += time.perf_counter()
-    print(f"{t1:.5f} seconds")
+    print(f"[fmi_pca::n={n},d={d},p={p},nprocs={nprocs}] completed in {t1:.5f} seconds\n")
 
     X = mmread(fname)
     components = mmread(f"{label}_princomps.mtx")
@@ -56,7 +56,8 @@ if __name__ == "__main__":
     t = pca.fit_transform(X)
     t2 += time.perf_counter()
 
+    print(f"[sklearn.decomposition.PCA::n={n},d={d},p={p}] completed in {t2:.5f} seconds\n")
+
     print(f"princomps_err = {np.linalg.norm(np.abs(pca.components_) - np.abs(components)):.18e}")
     print(f"expvar_err = {np.linalg.norm(pca.explained_variance_ - expvar):.18e}")
-    print(f"{t2:.5f} seconds")
 

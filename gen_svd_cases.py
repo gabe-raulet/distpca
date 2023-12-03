@@ -27,8 +27,8 @@ if __name__ == "__main__":
 
     # rowcnts = 2**np.arange(10,12)
     # colcnts = 2**np.arange(10,12)
-    rowcnts = [512, 1024]
-    colcnts = [1024, 2048]
+    rowcnts = [1024]
+    colcnts = [512]
     cvals = [100]
     dvals = [2]
     modes = [-1]
