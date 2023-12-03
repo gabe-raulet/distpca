@@ -58,12 +58,6 @@ int main(int argc, char *argv[])
     comm.hint(FMI::Utils::Hint::fast);
     comm.barrier();
 
-    //mpi_timer_t timer;
-    //double maxtime, proctime;
-
-    //mpi_timer_init(&timer, MPI_COMM_WORLD);
-    //mpi_timer_start(&timer);
-
     if (!myrank)
     {
         int tmp[2];
@@ -72,34 +66,6 @@ int main(int argc, char *argv[])
     }
 
     int s = d / nprocs;
-
-    //if (!myrank)
-    //{
-        //if ((n&(n-1)) || (d&(d-1)))
-        //{
-            //if (!myrank) fprintf(stderr, "[error::main][n=%d,d=%d] must have d and n both being powers of 2\n", n, d);
-            //return 1;
-        //}
-
-        //if (!(1 <= d && d <= n) || (n&(n-1)) || (d&(d-1)))
-        //{
-            //if (!myrank) fprintf(stderr, "[error::main][n=%d,d=%d] must have 1 <= d <= n with d and n both being powers of 2\n", n, d);
-            //return 1;
-        //}
-
-        //if (p > d || d % nprocs != 0 || p > s)
-        //{
-            //if (!myrank) fprintf(stderr, "[error::main][p=%d,d=%d,nprocs=%d] must have p <= d, d %% nprocs == 0, and p <= d/nprocs\n", p, d, nprocs);
-            //return 1;
-        //}
-    //}
-
-    //mpi_timer_stop(&timer);
-    //mpi_timer_query(&timer, &maxtime, &proctime);
-
-    //if (!myrank) fprintf(stderr, "[read_input::main::maxtime=%.5f(s)::proctime=%.5f(s)] finished\n", maxtime, proctime);
-
-    //mpi_timer_start(&timer);
 
     double *Up, *Sp, *Vtp;
 
@@ -115,27 +81,12 @@ int main(int argc, char *argv[])
     }
 
     Aloc = dalloc(n*s, 0);
-    /*MPI_Scatter(A, n*s, MPI_DOUBLE, Aloc, n*s, MPI_DOUBLE, 0, MPI_COMM_WORLD);*/
     fmi_scatter((void*)A, n*d*sizeof(double), (void*)Aloc, n*s*sizeof(double), 0, comm);
-
-    /*mpi_timer_stop(&timer);*/
-    /*mpi_timer_query(&timer, &maxtime, &proctime);*/
-
-    /*if (!myrank) fprintf(stderr, "[distribute_Amat::main::maxtime=%.5f(s)::proctime=%.5f(s)] finished\n", maxtime, proctime);*/
-
-    /*mpi_timer_start(&timer);*/
 
     if (svd_fmi(Aloc, Up, Sp, Vtp, n, d, p, 0, myrank, nprocs, comm) != 0)
     {
         return 1;
     }
-
-    /*mpi_timer_stop(&timer);*/
-    /*mpi_timer_query(&timer, &maxtime, &proctime);*/
-
-    /*if (!myrank) fprintf(stderr, "[svd_dist::main::maxtime=%.5f(s)::proctime=%.5f(s)] finished\n", maxtime, proctime);*/
-
-    /*mpi_timer_start(&timer);*/
 
     if (!myrank)
     {
@@ -151,11 +102,6 @@ int main(int argc, char *argv[])
 
         mmwrite(PCfname, Vtp, p, d);
     }
-
-    /*mpi_timer_stop(&timer);*/
-    /*mpi_timer_query(&timer, &maxtime, &proctime);*/
-
-    /*if (!myrank) fprintf(stderr, "[write_files::main::maxtime=%.5f(s)::proctime=%.5f(s)] finished\n", maxtime, proctime);*/
 
     if (!myrank)
     {

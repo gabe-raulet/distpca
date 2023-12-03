@@ -46,9 +46,7 @@ int svd_fmi
 
     if (myrank % 2 != 0)
     {
-        /*MPI_Send(A1i, m*p, MPI_DOUBLE, myrank-1, myrank, comm);*/
         fmi_send((void*)A1i, m*p*sizeof(double), myrank-1, comm);
-        /*MPI_Send(Vt1i, p*s, MPI_DOUBLE, myrank-1, myrank+nprocs, comm);*/
         fmi_send((void*)Vt1i, p*s*sizeof(double), myrank-1, comm);
     }
     else
@@ -56,10 +54,7 @@ int svd_fmi
         memcpy(Amem, A1i, m*p*sizeof(double));
         memcpy(Vtmem, Vt1i, p*s*sizeof(double));
 
-        /*MPI_Recv(&Amem[m*p], m*p, MPI_DOUBLE, myrank+1, myrank+1, comm, MPI_STATUS_IGNORE);*/
         fmi_recv((void*)(&Amem[m*p]), m*p*sizeof(double), myrank+1, comm);
-
-        /*MPI_Recv(&Vtmem[p*s], p*s, MPI_DOUBLE, myrank+1, myrank+1+nprocs, comm, MPI_STATUS_IGNORE);*/
         fmi_recv((void*)(&Vtmem[p*s]), p*s*sizeof(double), myrank+1, comm);
     }
 
@@ -86,10 +81,7 @@ int svd_fmi
             int Atag = myrank;
             int Vtag = myrank + nprocs;
 
-            /*MPI_Send(Ak1_lj, m*p, MPI_DOUBLE, dest, Atag, comm);*/
             fmi_send((void*)Ak1_lj, m*p*sizeof(double), dest, comm);
-
-            /*MPI_Send(Vtk1_lj, p*2*d, MPI_DOUBLE, dest, Vtag, comm);*/
             fmi_send((void*)Vtk1_lj, p*2*d*sizeof(double), dest, comm);
         }
         else if ((myrank % (1 << (k+1))) == 0)
@@ -99,16 +91,12 @@ int svd_fmi
             int Atag = myrank + (1 << k);
             int Vtag = myrank + (1 << k) + nprocs;
 
-            /*MPI_Recv(&Amem[m*p], m*p, MPI_DOUBLE, source, Atag, comm, MPI_STATUS_IGNORE);*/
             fmi_recv((void*)(&Amem[m*p]), m*p*sizeof(double), source, comm);
-
-            /*MPI_Recv(&Vtmem[p*2*d], p*2*d, MPI_DOUBLE, source, Vtag, comm, MPI_STATUS_IGNORE);*/
             fmi_recv((void*)(&Vtmem[p*2*d]), p*2*d*sizeof(double), source, comm);
         }
 
     }
 
-    /*MPI_Barrier(comm);*/
     comm.barrier();
 
     double *Aq1_11, *Aq1_12, *Vtq1_11, *Vtq1_12;
