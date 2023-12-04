@@ -1,0 +1,2 @@
+docker build -t aws-build -f Dockerfile .
+docker run -it --mount type=bind,source=/Users/gabrielraulet/Dev/November2023/distpca/aws_tests/lambda-demo,target=/opt/lambda-demo --rm aws-build:latest
