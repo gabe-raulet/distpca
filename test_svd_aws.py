@@ -19,11 +19,12 @@ for m in rowcnts:
             for nprocs in bvals:
                 failed = False
                 payload = dict()
-                payload["timestamp"] = int(datetime.datetime.now().timestamp())
+                payload["timestamp"] = str(datetime.datetime.now().timestamp())
                 payload["nprocs"] = int(nprocs)
                 payload["rows"] = int(m)
                 payload["cols"] = int(n)
                 payload["ncomps"] = int(p)
+                payload["seed"] = np.random.randint(1<<31)
                 t1 = -time.perf_counter()
                 # tcpunch = sp.Popen(["fmi/extern/TCPunch/server/build/tcpunchd"], stdout=sp.PIPE, stderr=sp.PIPE)
                 procs = [None]*nprocs
