@@ -1,0 +1,1 @@
+arn:aws:iam::183425780977:role/lambda-vpc-role
