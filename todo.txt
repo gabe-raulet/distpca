@@ -1,7 +1,0 @@
-1. implement MPI version here
-2. incorporate fmi stuff
-3. get fmi running on laptop
-3. get fmi running on aws
-4. get mpi running on perlmutter
-5. get PCA running on all 3
-6. get sagemaker running on all 3
